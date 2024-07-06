@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>충북대 학생 게시판 회원가입</title>
+    <link href="login&signup.css" rel="stylesheet">
+</head>
+<body>
+    <h2>회원가입</h2>
+    <form class="signup" method="POST" action="/register">
+        <label for="email">이메일</label> 
+        <input type="email" id="email" name="email" required> <!--input에 name이 없으면 서버로 전송 안됨-->
+
+        <label for="password">비밀번호</label> 
+        <input type="password" id="password" name="password" required>
+
+        <button type="submit" class="signup_button">회원가입</button> <!--submit으로 해야 됨-->
+
+    </form>
+</body>
+</html>

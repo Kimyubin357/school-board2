@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공지글 신청 확인</title>
+    <link href="/home.css" rel="stylesheet">
+</head>
+    <body class="grey-bg">
+    <%- include('nav.ejs') %>
+    <%=JSON.stringify(공지글) %>
+        <div class="detail-bg">
+            <h4><%=공지글.title %></h4>
+            <p><%=공지글.content %></p>
+        </div> 
+  </body>
+</html>

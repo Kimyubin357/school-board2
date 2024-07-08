@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공지글 신청 확인</title>
+    <link href="/home.css" rel="stylesheet">
+</head>
+    <body class="grey-bg">
+    <%- include('nav.ejs') %>
+    <%=JSON.stringify(공지글) %>
+
+    <form class="form-box" method="post" action="/update/<%=공지글._id %>">
+        <h4>공지글 신청 수정</h4>
+        
+        <input  name="title" value="<%=공지글.title %>" required>
+        <input  name="content" value="<%=공지글.content %> "required>
+        <button type="submit">수정하기</button>
+  </body>
+</html>

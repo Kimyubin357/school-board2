@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공지글 신청 확인</title>
+    <link href="home.css" rel="stylesheet">
+</head>
+<body class="grey-bg">
+  <%- include('nav.ejs') %>
+  <%= JSON.stringify(공지목록) %> <!--ejs에서 쏴준 변수를 받으려면 이렇게 해야 함-->
+
+    <div class="white-bg">
+      <% for(let i = 0; i < 공지목록.length ; i++) { %>
+        <div class="list-box">
+
+          <h4><a href="/request-list/<%= 공지목록[i]._id%>">
+            <%= 공지목록[i].title %></a>
+          </h4>
+          <p><%= 공지목록[i].content %></p><!--데이터 바인딩-->
+          <a href="request-list/edit/<%= 공지목록[i]._id%>">
+            <button>
+              수정
+            </button>
+          </a>
+          
+            <button class="delete" data-id="<%= 공지목록[i]._id%>" >삭제</button>
+          
+        </div>
+      <% } %>
+      
+    </div> 
+    <a href="/request-list/request">
+    <button>공지글 작성</button></a>
+
+    <!-- <script src="https://code.jquery.com/jquery-3.5.1.js"></script> -->
+
+    <script>
+      for (let i = 0; i < '<%= 공지목록.length %>' ; i++){
+
+
+        document.querySelectorAll('.delete')[i]
+        .addEventListener('click',function(e){
+          
+        fetch('/delete?id='+e.target.dataset.id,{
+          method : 'DELETE'
+        })
+        
+    })
+  }
+    </script>
+  </body>
+</html>
+

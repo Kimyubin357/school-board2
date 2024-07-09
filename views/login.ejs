@@ -4,10 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>충북대 학생 게시판 로그인</title>
+    <link href="/home.css" rel="stylesheet">
 </head>
-<body>
-
-    
+<body class="grey-bg">
+    <form class="form-box" action="/login" method="POST">
+        <h4>로그인</h4>
+        <input name="username" required>
+        <input name="password" type="password" required>
+        <button type="submit">로그인</button>
+        <a href="/signup">회원가입</a>
+    </form> 
     
 </body>
 </html>

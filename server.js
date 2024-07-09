@@ -1,7 +1,17 @@
 const express = require('express')
 const app = express()//express 라이브러리 사용을 위해 사용
 const methodOverride = require('method-override')
+const session = require('express-session')//express-session 라이브러리 사용
+const passport = require('passport')// passport 라이브러리 사용
+const LocalStrategy = require('passport-local') 
 
+app.use(passport.initialize())
+app.use(session({
+  secret: '암호화에 쓸 비번',//세션을 만들때 문자열을 암호화할 때 쓰는 비번
+  resave : false, // 요청을 날릴 때마다 세션을 갱신할지 말지
+  saveUninitialized : false // 로그인을 안해도 세션을 만들건지
+}))
+app.use(passport.session())//여기 app.use 순서 중요함 
 
 app.use(methodOverride('_method'))//put delete 사용을 위한 라이브러리
 app.use(express.static(__dirname + '/public'))//서버는 public 폴더 안에 있는 것들을 자유롭게 쓰겠다!
@@ -35,10 +45,46 @@ app.get('/',(요청, 응답)=>{
 app.get('/login',(요청, 응답)=>{
     응답.render('login.ejs')//render는 views폴더가 기본 경로이다.
 })
+passport.use(new LocalStrategy(async (입력한아이디, 입력한비번, cb) => {
+  let result = await db.collection('user').findOne({ username : 입력한아이디})
+  if (!result) {
+    return cb(null, false, { message: '아이디 DB에 없음' })
+  }
+  if (result.password == 입력한비번) {
+    return cb(null, result)
+  } else {
+    return cb(null, false, { message: '비번불일치' });
+  }
+}))
+app.post('/login',(요청, 응답, next)=>{
+  passport.authenticate('local',(error,user,info)=>{
+    if(error) return 응답.status(500).json(error)
+    if(!user) return 응답.status(401).json(info.message)
+    요청.logIn(user,(err)=>{
+      if(err) return next(err)
+      응답.redirect('/request-list')
+  })
+  })(요청, 응답, next)
 
+})
 app.get('/signup',(요청, 응답)=>{
-    응답.render('signup.ejs')
-  
+  응답.render('signup.ejs')//render는 views폴더가 기본 경로이다.
+})
+app.post('/register',async(요청, 응답)=>{
+  try{
+    let result = await db.collection('user').findOne({ username : 요청.body.username })
+    console.log(result)
+    if(result==null){
+      await db.collection('user').insertOne({username: 요청.body.username, password : 요청.body.password})
+      응답.redirect('/login')
+    }else{
+      응답.send('DB에 이미 있어 ㅅㄱ')
+    }
+    
+  } catch(e){
+    console.log(e)
+    응답.status(500).send('서버 에러남')
+  }
 })
 app.get('/request-list/request',(요청, 응답)=>{
   응답.render('request.ejs')
@@ -56,10 +102,16 @@ app.post('/please',async(요청,응답)=>{
 
 app.get('/request-list', async(요청, 응답)=>{
   let result = await db.collection('request').find().toArray();
-  응답.render('request-list.ejs', {공지목록 : result})
+  응답.render('request-list.ejs', {공지목록 : result , 개수 : 0})
+})
+app.get('/request-list/:page', async(요청, 응답)=>{
+  let count = await db.collection('request').count();
+  let result = await db.collection('request').find().skip((요청.params.page-1)*5).limit(5).toArray();
+  응답.render('request-list.ejs', {공지목록 : result , 개수 : count})
 })
 
-app.get('/request-list/:id',async(요청, 응답)=>{
+
+app.get('/request-list/detail/:id',async(요청, 응답)=>{
   try{
     let result = await db.collection('request').findOne({ _id : new ObjectId(요청.params.id)})
     if(result == null){

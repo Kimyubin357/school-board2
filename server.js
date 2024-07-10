@@ -4,13 +4,20 @@ const methodOverride = require('method-override')
 const session = require('express-session')//express-session 라이브러리 사용
 const passport = require('passport')// passport 라이브러리 사용
 const LocalStrategy = require('passport-local') 
+const bcrypt = require('bcrypt')//비밀번호 해시를 위한 라이브러리
+const MongoStore = require('connect-mongo')
 
 app.use(passport.initialize())
 app.use(session({
   secret: '암호화에 쓸 비번',//세션을 만들때 문자열을 암호화할 때 쓰는 비번
   resave : false, // 요청을 날릴 때마다 세션을 갱신할지 말지
-  saveUninitialized : false // 로그인을 안해도 세션을 만들건지
-}))
+  saveUninitialized : false, // 로그인을 안해도 세션을 만들건지
+  cookie :{maxAge : 60 * 60 * 1000},
+  store : MongoStore.create({
+    mongoUrl : 'mongodb+srv://admin:1212@yubinkim.vdjthal.mongodb.net/?retryWrites=true&w=majority&appName=yubinKim',
+    dbName : 'student_board'
+  })
+})) 
 app.use(passport.session())//여기 app.use 순서 중요함 
 
 app.use(methodOverride('_method'))//put delete 사용을 위한 라이브러리
@@ -43,6 +50,7 @@ app.get('/',(요청, 응답)=>{
 })
 
 app.get('/login',(요청, 응답)=>{
+    console.log(요청.user)
     응답.render('login.ejs')//render는 views폴더가 기본 경로이다.
 })
 passport.use(new LocalStrategy(async (입력한아이디, 입력한비번, cb) => {
@@ -50,12 +58,26 @@ passport.use(new LocalStrategy(async (입력한아이디, 입력한비번, cb) =
   if (!result) {
     return cb(null, false, { message: '아이디 DB에 없음' })
   }
-  if (result.password == 입력한비번) {
+  
+  if (await bcrypt.compare(입력한비번, result.password)) {
     return cb(null, result)
   } else {
     return cb(null, false, { message: '비번불일치' });
   }
 }))
+passport.serializeUser((user, done) => {
+  console.log(user)
+  process.nextTick(() => {
+    done(null, { id: user._id, username: user.username })
+  })
+})
+passport.deserializeUser(async(user, done) => {
+  let result = await db.collection('user').findOne({_id : new ObjectId(user.id)})
+  delete result.password
+  process.nextTick(() => {
+    return done(null, user)
+  })
+})
 app.post('/login',(요청, 응답, next)=>{
   passport.authenticate('local',(error,user,info)=>{
     if(error) return 응답.status(500).json(error)
@@ -70,12 +92,15 @@ app.post('/login',(요청, 응답, next)=>{
 app.get('/signup',(요청, 응답)=>{
   응답.render('signup.ejs')//render는 views폴더가 기본 경로이다.
 })
-app.post('/register',async(요청, 응답)=>{
+
+app.post('/signup',async(요청, 응답)=>{
   try{
     let result = await db.collection('user').findOne({ username : 요청.body.username })
-    console.log(result)
+
     if(result==null){
-      await db.collection('user').insertOne({username: 요청.body.username, password : 요청.body.password})
+      let hash = await bcrypt.hash(요청.body.password,10)
+
+      await db.collection('user').insertOne({username: 요청.body.username, password : hash})
       응답.redirect('/login')
     }else{
       응답.send('DB에 이미 있어 ㅅㄱ')
